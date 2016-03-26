@@ -1,7 +1,10 @@
 package com.razorreborn.robocar;
-
 /**
- * Created by razorSharp on 26/3/16.
+ * Created by Kiran Anto aka RazorSharp on 26/3/2016.
+ * For more Info Contact
+ * Kirananto@gmail.com
+ * 9495333724
+ * All Copyrights Reserved 2016
  */
 import android.content.Context;
 import android.view.MotionEvent;
@@ -10,7 +13,7 @@ import android.widget.FrameLayout;
 public class MapWrapperLayout extends FrameLayout {
 
     public interface OnDragListener {
-        public void onDrag(MotionEvent motionEvent);
+        void onDrag(MotionEvent motionEvent);
     }
 
     private OnDragListener mOnDragListener;

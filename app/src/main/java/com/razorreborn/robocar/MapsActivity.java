@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import android.app.Activity;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.view.MotionEvent;
@@ -17,23 +19,29 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.LatLng;
 import com.razorreborn.robocar.MapWrapperLayout.OnDragListener;
 
-public class MapsActivity extends Activity implements OnDragListener {
+/**
+ * Created by Kiran Anto aka RazorSharp on 26/3/2016.
+ * For more Info Contact
+ * Kirananto@gmail.com
+ * 9495333724
+ * All Copyrights Reserved 2016
+ */
+
+public class MapsActivity extends AppCompatActivity implements OnDragListener, OnMapReadyCallback {
 
     // Google Map
     private GoogleMap googleMap;
-    private CustomMapFragment mCustomMapFragment;
 
     private View mMarkerParentView;
     private ImageView mMarkerImageView;
 
-    private int imageParentWidth = -1;
-    private int imageParentHeight = -1;
-    private int imageHeight = -1;
     private int centerX = -1;
     private int centerY = -1;
 
@@ -53,7 +61,7 @@ public class MapsActivity extends Activity implements OnDragListener {
 
         try {
             // Loading map
-            initilizeMap();
+            initializeMap();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -68,17 +76,17 @@ public class MapsActivity extends Activity implements OnDragListener {
         DisplayMetrics displaymetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
 
-        imageParentWidth = mMarkerParentView.getWidth();
-        imageParentHeight = mMarkerParentView.getHeight();
-        imageHeight = mMarkerImageView.getHeight();
+        int imageParentWidth = mMarkerParentView.getWidth();
+        int imageParentHeight = mMarkerParentView.getHeight();
+        int imageHeight = mMarkerImageView.getHeight();
 
         centerX = imageParentWidth / 2;
         centerY = (imageParentHeight / 2) + (imageHeight / 2);
     }
 
-    private void initilizeMap() {
+    private void initializeMap() {
         if (googleMap == null) {
-            mCustomMapFragment = ((CustomMapFragment) getFragmentManager()
+            CustomMapFragment mCustomMapFragment = ((CustomMapFragment) getFragmentManager()
                     .findFragmentById(R.id.map));
             mCustomMapFragment.setOnDragListener(MapsActivity.this);
             googleMap = mCustomMapFragment.getMap();
@@ -103,8 +111,7 @@ public class MapsActivity extends Activity implements OnDragListener {
     @Override
     public void onDrag(MotionEvent motionEvent) {
         if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
-            Projection projection = (googleMap != null && googleMap
-                    .getProjection() != null) ? googleMap.getProjection()
+            Projection projection = (googleMap != null) ? googleMap.getProjection()
                     : null;
             //
             if (projection != null) {
@@ -120,7 +127,7 @@ public class MapsActivity extends Activity implements OnDragListener {
             Geocoder geocoder = new Geocoder(MapsActivity.this,
                     Locale.getDefault());
 
-            List<Address> addresses = new ArrayList<Address>();
+            List<Address> addresses = new ArrayList<>();
             try {
                 addresses = geocoder.getFromLocation(centerLatLng.latitude,
                         centerLatLng.longitude, 1);
@@ -147,10 +154,28 @@ public class MapsActivity extends Activity implements OnDragListener {
                 if (addressIndex3 != null) {
                     completeAddress += "," + addressIndex3;
                 }
-                if (completeAddress != null) {
-                    mLocationTextView.setText(completeAddress);
-                }
+                mLocationTextView.setText(completeAddress);
             }
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap map) {
+        map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        map.setMyLocationEnabled(true);
+        map.setTrafficEnabled(true);
+        map.setIndoorEnabled(true);
+        map.setBuildingsEnabled(true);
+        map.getUiSettings().setZoomControlsEnabled(true);
     }
 }

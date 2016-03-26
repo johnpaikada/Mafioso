@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:text="Set Location"
+        android:text="@string/set_location"
         android:textColor="@android:color/holo_green_dark"
         android:textSize="12sp" />
 
@@ -29,7 +29,7 @@
         android:layout_below="@id/text_view"
         android:layout_centerHorizontal="true"
         android:gravity="center"
-        android:text="Set Location"
+        android:text="@string/set_location"
         android:textColor="@android:color/black"
         android:textSize="14sp" />
     </RelativeLayout>

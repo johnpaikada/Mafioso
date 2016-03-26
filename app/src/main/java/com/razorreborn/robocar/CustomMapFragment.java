@@ -1,13 +1,18 @@
 package com.razorreborn.robocar;
 
 /**
- * Created by razorSharp on 26/3/16.
+ * Created by Kiran Anto aka RazorSharp on 26/3/2016.
+ * For more Info Contact
+ * Kirananto@gmail.com
+ * 9495333724
+ * All Copyrights Reserved 2016
  */
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 
 public class CustomMapFragment extends MapFragment {

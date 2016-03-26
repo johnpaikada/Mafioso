@@ -1,20 +1,12 @@
 package com.razorreborn.robocar;
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 
-import com.google.android.gms.appindexing.Action;
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
-
 
 /**
- * Created by Kiran Anto aka RazorSharp on 1/26/2016.
+ * Created by Kiran Anto aka RazorSharp on 26/3/2016.
  * For more Info Contact
  * Kirananto@gmail.com
  * 9495333724
