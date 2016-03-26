@@ -1,99 +1,156 @@
 package com.razorreborn.robocar;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentActivity;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
+import android.app.Activity;
+import android.graphics.Point;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
+import android.view.MotionEvent;
 import android.view.View;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.razorreborn.robocar.MapWrapperLayout.OnDragListener;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MapsActivity extends Activity implements OnDragListener {
 
-    private GoogleMap mMap;
-    private GoogleApiClient mGoogleApiClient;
+    // Google Map
+    private GoogleMap googleMap;
+    private CustomMapFragment mCustomMapFragment;
+
+    private View mMarkerParentView;
+    private ImageView mMarkerImageView;
+
+    private int imageParentWidth = -1;
+    private int imageParentHeight = -1;
+    private int imageHeight = -1;
+    private int centerX = -1;
+    private int centerY = -1;
+
+    private TextView mLocationTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
-        toolbar.setLogo(R.mipmap.ic_launcher);
-        toolbar.setTitle("    ROBO CAR  ");
-        toolbar.setTitleTextColor(getResources().getColor(R.color.white));
-        toolbar.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-        setSupportActionBar(toolbar);
-        // Create an instance of GoogleAPIClient.
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
+
+        // InitializeUI
+        initializeUI();
+
+    }
+
+    private void initializeUI() {
+
+        try {
+            // Loading map
+            initilizeMap();
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        mLocationTextView = (TextView) findViewById(R.id.location_text_view);
+        mMarkerParentView = findViewById(R.id.marker_view_incl);
+        mMarkerImageView = (ImageView) findViewById(R.id.marker_icon_view);
     }
 
-
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+    public void onWindowFocusChanged(boolean hasFocus) {
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
 
-        // Add a marker in Sydney and move the camera
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        imageParentWidth = mMarkerParentView.getWidth();
+        imageParentHeight = mMarkerParentView.getHeight();
+        imageHeight = mMarkerImageView.getHeight();
+
+        centerX = imageParentWidth / 2;
+        centerY = (imageParentHeight / 2) + (imageHeight / 2);
+    }
+
+    private void initilizeMap() {
+        if (googleMap == null) {
+            mCustomMapFragment = ((CustomMapFragment) getFragmentManager()
+                    .findFragmentById(R.id.map));
+            mCustomMapFragment.setOnDragListener(MapsActivity.this);
+            googleMap = mCustomMapFragment.getMap();
+            // check if map is created successfully or not
+            if (googleMap == null) {
+                Toast.makeText(getApplicationContext(),
+                        "Sorry! unable to create maps", Toast.LENGTH_SHORT)
+                        .show();
+            }
         }
-        Location pos = LocationServices.FusedLocationApi.getLastLocation(
-                mGoogleApiClient);
-        LatLng currpos = new LatLng(pos.getLatitude(),pos.getLongitude());
-        mMap.addMarker(new MarkerOptions().position(currpos).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(currpos));
+        // CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng,
+        // 10);
+        // googleMap.animateCamera(cameraUpdate);
+        // locationManager.removeUpdates(this);
     }
 
     @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override
-    public void onConnectionSuspended(int i) {
-
+    public void onDrag(MotionEvent motionEvent) {
+        if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+            Projection projection = (googleMap != null && googleMap
+                    .getProjection() != null) ? googleMap.getProjection()
+                    : null;
+            //
+            if (projection != null) {
+                LatLng centerLatLng = projection.fromScreenLocation(new Point(
+                        centerX, centerY));
+                updateLocation(centerLatLng);
+            }
+        }
     }
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    private void updateLocation(LatLng centerLatLng) {
+        if (centerLatLng != null) {
+            Geocoder geocoder = new Geocoder(MapsActivity.this,
+                    Locale.getDefault());
 
+            List<Address> addresses = new ArrayList<Address>();
+            try {
+                addresses = geocoder.getFromLocation(centerLatLng.latitude,
+                        centerLatLng.longitude, 1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (addresses != null && addresses.size() > 0) {
+
+                String addressIndex0 = (addresses.get(0).getAddressLine(0) != null) ? addresses
+                        .get(0).getAddressLine(0) : null;
+                String addressIndex1 = (addresses.get(0).getAddressLine(1) != null) ? addresses
+                        .get(0).getAddressLine(1) : null;
+                String addressIndex2 = (addresses.get(0).getAddressLine(2) != null) ? addresses
+                        .get(0).getAddressLine(2) : null;
+                String addressIndex3 = (addresses.get(0).getAddressLine(3) != null) ? addresses
+                        .get(0).getAddressLine(3) : null;
+
+                String completeAddress = addressIndex0 + "," + addressIndex1;
+
+                if (addressIndex2 != null) {
+                    completeAddress += "," + addressIndex2;
+                }
+                if (addressIndex3 != null) {
+                    completeAddress += "," + addressIndex3;
+                }
+                if (completeAddress != null) {
+                    mLocationTextView.setText(completeAddress);
+                }
+            }
+        }
     }
 }
