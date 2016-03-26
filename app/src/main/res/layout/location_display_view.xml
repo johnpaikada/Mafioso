@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="60dp"
     card_view:cardCornerRadius="3dp"
+    android:layout_below="@id/mapstoolbar"
     android:background="@android:color/white"
     android:elevation = "3dp"
     android:translationZ="5dp">
@@ -18,6 +19,7 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:gravity="center"
+        android:layout_marginTop="10dp"
         android:text="@string/set_location"
         android:textColor="@android:color/holo_green_dark"
         android:textSize="12sp" />
