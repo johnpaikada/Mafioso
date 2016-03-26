@@ -89,13 +89,9 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
             CustomMapFragment mCustomMapFragment = ((CustomMapFragment) getFragmentManager()
                     .findFragmentById(R.id.map));
             mCustomMapFragment.setOnDragListener(MapsActivity.this);
-            googleMap = mCustomMapFragment.getMap();
+            mCustomMapFragment.getMapAsync(this);
             // check if map is created successfully or not
-            if (googleMap == null) {
-                Toast.makeText(getApplicationContext(),
-                        "Sorry! unable to create maps", Toast.LENGTH_SHORT)
-                        .show();
-            }
+
         }
         // CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng,
         // 10);
@@ -177,5 +173,11 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
         map.setIndoorEnabled(true);
         map.setBuildingsEnabled(true);
         map.getUiSettings().setZoomControlsEnabled(true);
+        googleMap = map;
+        if (googleMap == null) {
+            Toast.makeText(getApplicationContext(),
+                    "Sorry! unable to create maps", Toast.LENGTH_SHORT)
+                    .show();
+        }
     }
 }
