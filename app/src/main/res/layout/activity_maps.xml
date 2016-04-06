@@ -29,7 +29,6 @@
         layout="@layout/marker_view" />
 
     <include
-        android:id="@+id/location_display_incl"
         android:layout_width="fill_parent"
         android:layout_height="60dp"
         android:layout_alignParentTop="true"
@@ -48,7 +47,7 @@
         android:layout_margin="@dimen/fab_margin"
         android:layout_alignBottom="@id/map"
         android:elevation="5dp"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:src="@android:drawable/ic_menu_mylocation" />
 
 </RelativeLayout>

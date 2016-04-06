@@ -19,8 +19,7 @@
         android:layout_height="28dp"
         android:text="SELECT YOUR DEVICE"
         android:textColor="@android:color/black"
-        android:gravity="center"
-        android:id="@+id/select_device" />
+        android:gravity="center" />
 
     <TextView
         android:id="@+id/bluetoothstate"

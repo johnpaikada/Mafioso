@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import android.annotation.TargetApi;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -13,8 +12,6 @@ import android.support.design.widget.FloatingActionButton;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.location.Address;
@@ -22,9 +19,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
@@ -32,7 +27,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,10 +35,8 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderApi;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.internal.FusedLocationProviderResult;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -66,42 +58,12 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++
     final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
-    public LocationManager mLocationManager;
-    LocationRequest mLocationRequest;
-    EditText lat;
-    int updates;
-    TextView textView;
-    private final LocationListener mLocationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            LatLng lng = new LatLng(location.getLatitude(),location.getLongitude());
-            textView.setText(String.valueOf(updates) + " updates");
-        }
-
-        /*@Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }*/
-    };
-    //++++++++++++++++++++++++++++++++++++++++++++++
-    FloatingActionButton fab;
-    EditText lon;
+    private LocationRequest mLocationRequest;
     // Google Map
     private GoogleMap googleMap;
     private View mMarkerParentView;
     private ImageView mMarkerImageView;
     private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
     private int centerX = -1;
     private int centerY = -1;
     private TextView mLocationTextView;
@@ -169,17 +131,14 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
         getLocation();//if already has permission
     }
 
-    protected void getLocation() {
-        int LOCATION_REFRESH_TIME = 1000;
-        int LOCATION_REFRESH_DISTANCE = 5;
+    private void getLocation() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
                 Log.v("WEAVER_", "Has permission");
-                mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
                 LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
                         mLocationRequest, this);
-                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                         mGoogleApiClient);
                 if (mLastLocation != null) {
                     showCurrentLocation(mLastLocation);
@@ -255,6 +214,7 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
             }
         }
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.getGpsLocation);
+        assert fab != null;
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

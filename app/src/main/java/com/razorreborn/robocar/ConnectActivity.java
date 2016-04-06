@@ -7,7 +7,6 @@ package com.razorreborn.robocar;
  * 9495333724
  * All Copyrights Reserved 2016
  */
-import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
@@ -28,12 +27,11 @@ public class ConnectActivity extends AppCompatActivity {
 
     private static final int REQUEST_ENABLE_BT = 1;
 
-    ListView listDevicesFound;
-    Button btnScanDevice;
-    TextView stateBluetooth;
-    BluetoothAdapter bluetoothAdapter;
+    private Button btnScanDevice;
+    private TextView stateBluetooth;
+    private BluetoothAdapter bluetoothAdapter;
 
-    ArrayAdapter<String> btArrayAdapter;
+    private ArrayAdapter<String> btArrayAdapter;
 
     /** Called when the activity is first created. */
     @Override
@@ -50,8 +48,8 @@ public class ConnectActivity extends AppCompatActivity {
         stateBluetooth = (TextView)findViewById(R.id.bluetoothstate);
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        listDevicesFound = (ListView)findViewById(R.id.devicesfound);
-        btArrayAdapter = new ArrayAdapter<String>(ConnectActivity.this, android.R.layout.simple_list_item_1);
+        ListView listDevicesFound = (ListView) findViewById(R.id.devicesfound);
+        btArrayAdapter = new ArrayAdapter<>(ConnectActivity.this, android.R.layout.simple_list_item_1);
         listDevicesFound.setAdapter(btArrayAdapter);
 
         CheckBlueToothState();
@@ -96,7 +94,7 @@ public class ConnectActivity extends AppCompatActivity {
         }
     }
 
-    private Button.OnClickListener btnScanDeviceOnClickListener
+    private final Button.OnClickListener btnScanDeviceOnClickListener
             = new Button.OnClickListener(){
 
         @Override
