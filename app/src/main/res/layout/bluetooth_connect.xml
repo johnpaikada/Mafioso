@@ -35,7 +35,7 @@
         android:layout_gravity="center"
         android:enabled="false"
         />
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/devicesfound"
         android:layout_margin="10dp"
         android:layout_width="fill_parent"
