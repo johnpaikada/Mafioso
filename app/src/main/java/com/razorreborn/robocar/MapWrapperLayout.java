@@ -7,6 +7,7 @@ package com.razorreborn.robocar;
  * All Copyrights Reserved 2016
  */
 import android.content.Context;
+import android.os.Bundle;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
@@ -14,6 +15,8 @@ public class MapWrapperLayout extends FrameLayout {
 
     public interface OnDragListener {
         void onDrag(MotionEvent motionEvent);
+
+        void onConnected(Bundle bundle);
     }
 
     private OnDragListener mOnDragListener;

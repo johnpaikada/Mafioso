@@ -41,9 +41,10 @@ public class ConnectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.bluetooth_connect);
 
-        Toolbar toolbar = (Toolbar)findViewById(R.id.bluetoothtoolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.bluetoothtoolbar);
+        toolbar.setLogo(R.mipmap.ic_launcher);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.white));
         setSupportActionBar(toolbar);
-
         btnScanDevice = (Button)findViewById(R.id.scandevice);
 
         stateBluetooth = (TextView)findViewById(R.id.bluetoothstate);

@@ -5,29 +5,55 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import android.annotation.TargetApi;
+import android.net.Uri;
+import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
+
 import android.Manifest;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderApi;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.internal.FusedLocationProviderResult;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.razorreborn.robocar.MapWrapperLayout.OnDragListener;
-
+import com.google.android.gms.location.LocationListener;
 /**
  * Created by Kiran Anto aka RazorSharp on 26/3/2016.
  * For more Info Contact
@@ -36,31 +62,149 @@ import com.razorreborn.robocar.MapWrapperLayout.OnDragListener;
  * All Copyrights Reserved 2016
  */
 
-public class MapsActivity extends AppCompatActivity implements OnDragListener, OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnDragListener, OnMapReadyCallback,GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener {
 
+    //+++++++++++++++++++++++++++++++++++++++++++++++++
+    final private int REQUEST_CODE_ASK_PERMISSIONS = 123;
+    public LocationManager mLocationManager;
+    LocationRequest mLocationRequest;
+    EditText lat;
+    int updates;
+    TextView textView;
+    private final LocationListener mLocationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            LatLng lng = new LatLng(location.getLatitude(),location.getLongitude());
+            textView.setText(String.valueOf(updates) + " updates");
+        }
+
+        /*@Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }*/
+    };
+    //++++++++++++++++++++++++++++++++++++++++++++++
+    FloatingActionButton fab;
+    EditText lon;
     // Google Map
     private GoogleMap googleMap;
-
     private View mMarkerParentView;
     private ImageView mMarkerImageView;
-
+    private GoogleApiClient mGoogleApiClient;
+    private Location mLastLocation;
     private int centerX = -1;
     private int centerY = -1;
-
     private TextView mLocationTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        Toolbar toolbar = (Toolbar)findViewById(R.id.mapstoolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.mapstoolbar);
         toolbar.setLogo(R.mipmap.ic_launcher);
         toolbar.setTitleTextColor(getResources().getColor(R.color.white));
         setSupportActionBar(toolbar);
-
+        // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .addApi(AppIndex.API).build();
+        mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(3000).setFastestInterval(3000);
+//				.setSmallestDisplacement(3);
         // InitializeUI
         initializeUI();
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_ASK_PERMISSIONS:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Accepted
+                    getLocation();
+                } else {
+                    // Denied
+                    Toast.makeText(MapsActivity.this, "LOCATION Denied", Toast.LENGTH_SHORT)
+                            .show();
+                }
+                break;
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location)
+    {
+
+    }
+
+    private void handlePermissionsAndGetLocation() {
+        int hasWriteContactsPermission = 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            hasWriteContactsPermission = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (hasWriteContactsPermission != PackageManager.PERMISSION_GRANTED) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        REQUEST_CODE_ASK_PERMISSIONS);
+            }
+            return;
+        }
+        getLocation();//if already has permission
+    }
+
+    protected void getLocation() {
+        int LOCATION_REFRESH_TIME = 1000;
+        int LOCATION_REFRESH_DISTANCE = 5;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
+                Log.v("WEAVER_", "Has permission");
+                mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
+                        mLocationRequest, this);
+                mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                        mGoogleApiClient);
+                if (mLastLocation != null) {
+                    showCurrentLocation(mLastLocation);
+                }
+            } else {
+                Log.v("WEAVER_", "Does not have permission");
+            }
+        }
+
+    }
+    private void showCurrentLocation(Location location){
+
+        googleMap.clear();
+
+        LatLng currentPosition = new LatLng(location.getLatitude(),location.getLongitude());
+
+        googleMap.addMarker(new MarkerOptions()
+                .position(currentPosition)
+                .snippet("Lat: " + location.getLatitude() + ", Lng: " + location.getLongitude())
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_pin))
+                .flat(true)
+                .title("I'm here!"));
+
+        // Zoom in, animating the camera.
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 18));
     }
 
     @Override
@@ -72,7 +216,6 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
 
 
     private void initializeUI() {
-
         try {
             // Loading map
             initializeMap();
@@ -111,6 +254,14 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
                         .show();
             }
         }
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.getGpsLocation);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                handlePermissionsAndGetLocation();
+
+            }
+        });
         // CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng,
         // 10);
         // googleMap.animateCamera(cameraUpdate);
@@ -191,5 +342,80 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
         map.setIndoorEnabled(true);
         map.setBuildingsEnabled(true);
         map.getUiSettings().setZoomControlsEnabled(true);
+    }
+
+    private boolean isGPSEnabled() {
+        LocationManager cm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        return cm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        //if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+        //    return;
+        //}
+        //Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+       // if (mLastLocation != null) {
+        //    lat.setText(String.valueOf(mLastLocation.getLatitude()));
+       //     lon.setText(String.valueOf(mLastLocation.getLongitude()));
+       // }
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        mGoogleApiClient.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Maps Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.razorreborn.robocar/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(mGoogleApiClient, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Maps Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app URL is correct.
+                Uri.parse("android-app://com.razorreborn.robocar/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(mGoogleApiClient, viewAction);
+        mGoogleApiClient.disconnect();
     }
 }
