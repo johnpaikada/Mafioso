@@ -1,11 +1,20 @@
 package com.razorreborn.robocar;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -21,6 +30,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -44,8 +54,12 @@ import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.razorreborn.robocar.MapWrapperLayout.OnDragListener;
 import com.google.android.gms.location.LocationListener;
+
+import org.json.JSONObject;
+
 /**
  * Created by Kiran Anto aka RazorSharp on 26/3/2016.
  * For more Info Contact
@@ -61,6 +75,9 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
     private LocationRequest mLocationRequest;
     // Google Map
     private GoogleMap googleMap;
+    public CardView cardView;
+    public LatLng currentPosition;
+    public LatLng centerLatLng;
     private View mMarkerParentView;
     private ImageView mMarkerImageView;
     private GoogleApiClient mGoogleApiClient;
@@ -146,6 +163,14 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
             } else {
                 Log.v("WEAVER_", "Does not have permission");
             }
+        } else {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
+                    mLocationRequest, this);
+            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                    mGoogleApiClient);
+            if (mLastLocation != null) {
+                showCurrentLocation(mLastLocation);
+            }
         }
 
     }
@@ -153,7 +178,8 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
 
         googleMap.clear();
 
-        LatLng currentPosition = new LatLng(location.getLatitude(),location.getLongitude());
+
+        currentPosition = new LatLng(location.getLatitude(),location.getLongitude());
 
         googleMap.addMarker(new MarkerOptions()
                 .position(currentPosition)
@@ -222,12 +248,139 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
 
             }
         });
+        cardView = (CardView) findViewById(R.id.cardz);
+        cardView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+               //TODO : ADD FUNCTIONS HERE
+                LatLng origin = currentPosition;
+                LatLng dest = centerLatLng;
+                String url = getDirectionsUrl(origin, dest);
+                DownloadTask downloadTask = new DownloadTask();
+                downloadTask.execute(url);
+            }
+        });
+
         // CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng,
         // 10);
         // googleMap.animateCamera(cameraUpdate);
         // locationManager.removeUpdates(this);
     }
 
+    private String getDirectionsUrl(LatLng origin, LatLng dest) {
+        String str_origin = "origin=" + origin.latitude + ","
+                + origin.longitude;
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+        String sensor = "sensor=false";
+        String parameters = str_origin + "&" + str_dest + "&" + sensor;
+        String output = "json";
+        String url = "https://maps.googleapis.com/maps/api/directions/"
+                + output + "?" + parameters;
+        return url;
+    }
+
+    @SuppressLint("LongLogTag")
+    private String downloadUrl(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.connect();
+            iStream = urlConnection.getInputStream();
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                    iStream));
+            StringBuffer sb = new StringBuffer();
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            data = sb.toString();
+            br.close();
+        } catch (Exception e) {
+            Log.d("Exception while downloading url", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    private class DownloadTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... url) {
+            String data = "";
+            try {
+                data = downloadUrl(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            ParserTask parserTask = new ParserTask();
+            parserTask.execute(result);
+        }
+    }
+
+    private class ParserTask extends
+            AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(
+                String... jsonData) {
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                PathJSONParser parser = new PathJSONParser();
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+            Log.e("results", result + "");
+            if (result.size() < 1) {
+                Toast.makeText(getApplicationContext(), "No Points", Toast.LENGTH_SHORT)
+                        .show();
+                return;
+            }
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+                List<HashMap<String, String>> path = result.get(i);
+                Log.e("points", path + "");
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+                    if (j == 0) {
+                        //tvDistance.setText("Distance : "
+                              //  + point.get("distance"));
+                    } else if (j == 1) {
+                        //tvTime.setText("Duration : " + point.get("duration"));
+                    } else if (j > 1) {
+                        double lat = Double.parseDouble(point.get("lat"));
+                        double lng = Double.parseDouble(point.get("lng"));
+                        LatLng position = new LatLng(lat, lng);
+                        points.add(position);
+                    }
+                }
+                lineOptions.addAll(points);
+                lineOptions.width(10);
+                lineOptions.color(getResources().getColor(R.color.PathColor));
+            }
+            googleMap.addPolyline(lineOptions);
+        }
+    }
     @Override
     protected void onResume() {
         super.onResume();
@@ -240,7 +393,7 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
                     : null;
             //
             if (projection != null) {
-                LatLng centerLatLng = projection.fromScreenLocation(new Point(
+                centerLatLng = projection.fromScreenLocation(new Point(
                         centerX, centerY));
                 updateLocation(centerLatLng);
             }
