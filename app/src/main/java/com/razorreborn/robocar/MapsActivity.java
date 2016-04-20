@@ -255,75 +255,129 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
                //TODO : ADD FUNCTIONS HERE
                 LatLng origin = currentPosition;
                 LatLng dest = centerLatLng;
+                googleMap.clear();
+                googleMap.addMarker(new MarkerOptions()
+                        .position(dest)
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_pin))
+                        .flat(true)
+                        .title("My Destination"));
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 18));
                 String url = getDirectionsUrl(origin, dest);
                 DownloadTask downloadTask = new DownloadTask();
                 downloadTask.execute(url);
             }
         });
-
-        // CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng,
-        // 10);
-        // googleMap.animateCamera(cameraUpdate);
-        // locationManager.removeUpdates(this);
+        
     }
 
-    private String getDirectionsUrl(LatLng origin, LatLng dest) {
+    private String getDirectionsUrl(LatLng origin, LatLng dest)
+    {
+
+        // Origin of route
         String str_origin = "origin=" + origin.latitude + ","
                 + origin.longitude;
+
+        // Destination of route
         String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+        // Sensor enabled
         String sensor = "sensor=false";
-        String parameters = str_origin + "&" + str_dest + "&" + sensor;
+
+        // Travelling Mode
+        String mode = "mode=driving";
+
+        // Building the parameters to the web service
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&"
+                + mode;
+
+        // Output format
         String output = "json";
-        return "https://maps.googleapis.com/maps/api/directions/"
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/"
                 + output + "?" + parameters;
+
+        return url;
     }
 
-    @SuppressLint("LongLogTag")
-    private String downloadUrl(String strUrl) throws IOException {
+    /** A method to download json data from url */
+    private String downloadUrl(String strUrl) throws IOException
+    {
         String data = "";
         InputStream iStream = null;
         HttpURLConnection urlConnection = null;
-        try {
+        try
+        {
             URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
             urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
             urlConnection.connect();
+
+            // Reading data from url
             iStream = urlConnection.getInputStream();
+
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     iStream));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null) {
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null)
+            {
                 sb.append(line);
             }
+
             data = sb.toString();
+
             br.close();
-        } catch (Exception e) {
-            Log.d("Exception while downloading url", e.toString());
-        } finally {
-            assert iStream != null;
+
+        } catch (Exception e)
+        {
+            Log.d("Exception ing url", e.toString());
+        } finally
+        {
             iStream.close();
-            assert urlConnection != null;
             urlConnection.disconnect();
         }
         return data;
     }
 
-    private class DownloadTask extends AsyncTask<String, Void, String> {
+    // Fetches data from url passed
+    private class DownloadTask extends AsyncTask<String, Void, String>
+    {
+
+        // Downloading data in non-ui thread
         @Override
-        protected String doInBackground(String... url) {
+        protected String doInBackground(String... url)
+        {
+
+            // For storing data from web service
             String data = "";
-            try {
+
+            try
+            {
+                // Fetching the data from web service
                 data = downloadUrl(url[0]);
-            } catch (Exception e) {
+            } catch (Exception e)
+            {
                 Log.d("Background Task", e.toString());
             }
             return data;
         }
 
+        // Executes in UI thread, after the execution of
+        // doInBackground()
         @Override
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(String result)
+        {
             super.onPostExecute(result);
+
             ParserTask parserTask = new ParserTask();
+
+            // Invokes the thread for parsing the JSON data
             parserTask.execute(result);
         }
     }
