@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Locale;
 
 import android.annotation.SuppressLint;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -75,9 +74,9 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
     private LocationRequest mLocationRequest;
     // Google Map
     private GoogleMap googleMap;
-    public CardView cardView;
-    public LatLng currentPosition;
-    public LatLng centerLatLng;
+    private CardView cardView;
+    private LatLng currentPosition;
+    private LatLng centerLatLng;
     private View mMarkerParentView;
     private ImageView mMarkerImageView;
     private GoogleApiClient mGoogleApiClient;
@@ -275,9 +274,8 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
         String sensor = "sensor=false";
         String parameters = str_origin + "&" + str_dest + "&" + sensor;
         String output = "json";
-        String url = "https://maps.googleapis.com/maps/api/directions/"
+        return "https://maps.googleapis.com/maps/api/directions/"
                 + output + "?" + parameters;
-        return url;
     }
 
     @SuppressLint("LongLogTag")
@@ -292,8 +290,8 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
             iStream = urlConnection.getInputStream();
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     iStream));
-            StringBuffer sb = new StringBuffer();
-            String line = "";
+            StringBuilder sb = new StringBuilder();
+            String line;
             while ((line = br.readLine()) != null) {
                 sb.append(line);
             }
@@ -302,7 +300,9 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
         } catch (Exception e) {
             Log.d("Exception while downloading url", e.toString());
         } finally {
+            assert iStream != null;
             iStream.close();
+            assert urlConnection != null;
             urlConnection.disconnect();
         }
         return data;
@@ -347,7 +347,7 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
 
         @Override
         protected void onPostExecute(List<List<HashMap<String, String>>> result) {
-            ArrayList<LatLng> points = null;
+            ArrayList<LatLng> points;
             PolylineOptions lineOptions = null;
             Log.e("results", result + "");
             if (result.size() < 1) {
@@ -356,7 +356,7 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
                 return;
             }
             for (int i = 0; i < result.size(); i++) {
-                points = new ArrayList<LatLng>();
+                points = new ArrayList<>();
                 lineOptions = new PolylineOptions();
                 List<HashMap<String, String>> path = result.get(i);
                 Log.e("points", path + "");
