@@ -12,14 +12,18 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Created by razorSharp on 6/4/16.
+ * Created by Kiran Anto aka RazorSharp on 21/4/2016.
+ * For more Info Contact
+ * Kirananto@gmail.com
+ * 9495333724
+ * All Copyrights Reserved 2016
  */
+
 public class Global extends AppCompatActivity {
     public static String deviceName;
     public static BluetoothDevice device;
-    private static BluetoothAdapter myBluetooth = null;
     private static BluetoothSocket btSocket = null;
-    private String address = null;
+    private final String address = null;
     private ProgressDialog progress;
     private boolean isBtConnected = false;
     private static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
@@ -42,7 +46,7 @@ public class Global extends AppCompatActivity {
             {
                 if (btSocket == null || !isBtConnected)
                 {
-                    myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
+                    BluetoothAdapter myBluetooth = BluetoothAdapter.getDefaultAdapter();
                     BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
                     btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
                     BluetoothAdapter.getDefaultAdapter().cancelDiscovery();

@@ -1,7 +1,11 @@
 package com.razorreborn.robocar;
 
 /**
- * Created by razorSharp on 12/4/16.
+ * Created by Kiran Anto aka RazorSharp on 21/4/2016.
+ * For more Info Contact
+ * Kirananto@gmail.com
+ * 9495333724
+ * All Copyrights Reserved 2016
  */
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,7 +29,7 @@ class HttpConnection {
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     iStream));
             StringBuilder sb = new StringBuilder();
-            String line = "";
+            String line;
             while ((line = br.readLine()) != null) {
                 sb.append(line);
             }
@@ -34,6 +38,7 @@ class HttpConnection {
         } catch (Exception e) {
             Log.d("Exception while readi", e.toString());
         } finally {
+            assert iStream != null;
             iStream.close();
             assert urlConnection != null;
             urlConnection.disconnect();

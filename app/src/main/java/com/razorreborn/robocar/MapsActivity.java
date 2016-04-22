@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -74,7 +73,7 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
     private LocationRequest mLocationRequest;
     // Google Map
     private GoogleMap googleMap;
-    private CardView cardView;
+    private TextView text;
     private LatLng currentPosition;
     private LatLng centerLatLng;
     private View mMarkerParentView;
@@ -89,9 +88,11 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         Toolbar toolbar = (Toolbar) findViewById(R.id.mapstoolbar);
+        assert toolbar != null;
         toolbar.setLogo(R.mipmap.ic_launcher);
         toolbar.setTitleTextColor(getResources().getColor(R.color.white));
         setSupportActionBar(toolbar);
+        text = (TextView) findViewById(R.id.navigate_text_view);
         // ATTENTION: This "addApi(AppIndex.API)"was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -109,7 +110,7 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
             case REQUEST_CODE_ASK_PERMISSIONS:
                 if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -244,15 +245,17 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
             @Override
             public void onClick(View view) {
                 handlePermissionsAndGetLocation();
+                text.setText(" Choose Path");
 
             }
         });
-        cardView = (CardView) findViewById(R.id.cardz);
+        CardView cardView = (CardView) findViewById(R.id.cardz);
+        assert cardView != null;
         cardView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
-               //TODO : ADD FUNCTIONS HERE
+                if(text.getText().equals(" Choose Path")) {
                 LatLng origin = currentPosition;
                 LatLng dest = centerLatLng;
                 googleMap.clear();
@@ -261,13 +264,18 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
                         .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_pin))
                         .flat(true)
                         .title("My Destination"));
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentPosition, 18));
                 String url = getDirectionsUrl(origin, dest);
                 DownloadTask downloadTask = new DownloadTask();
                 downloadTask.execute(url);
+                text.setText("Navigate to This Location");
+
+                }
+                else {
+                    //TODO add stuff that happens when navigate is clicked...
+                }
             }
         });
-        
+0
     }
 
     private String getDirectionsUrl(LatLng origin, LatLng dest)
@@ -294,10 +302,9 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
         String output = "json";
 
         // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/"
-                + output + "?" + parameters;
 
-        return url;
+        return "https://maps.googleapis.com/maps/api/directions/"
+                + output + "?" + parameters;
     }
 
     /** A method to download json data from url */
@@ -322,9 +329,9 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     iStream));
 
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
 
-            String line = "";
+            String line;
             while ((line = br.readLine()) != null)
             {
                 sb.append(line);
@@ -339,7 +346,9 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
             Log.d("Exception ing url", e.toString());
         } finally
         {
+            assert iStream != null;
             iStream.close();
+            assert urlConnection != null;
             urlConnection.disconnect();
         }
         return data;
@@ -414,6 +423,7 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
                 lineOptions = new PolylineOptions();
                 List<HashMap<String, String>> path = result.get(i);
                 Log.e("points", path + "");
+                int count=0;
                 for (int j = 0; j < path.size(); j++) {
                     HashMap<String, String> point = path.get(j);
                     if (j == 0) {
@@ -426,6 +436,11 @@ public class MapsActivity extends AppCompatActivity implements OnDragListener, O
                         double lng = Double.parseDouble(point.get("lng"));
                         LatLng position = new LatLng(lat, lng);
                         points.add(position);
+                        if(count==0)
+                        {
+                            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, 18));
+                            count++;
+                        }
                     }
                 }
                 lineOptions.addAll(points);

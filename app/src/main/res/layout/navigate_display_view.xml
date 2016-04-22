@@ -20,7 +20,7 @@
             android:layout_centerVertical="true"
             android:gravity="center_vertical"
             android:layout_margin="15dp"
-            android:text="Navigate to This Location"
+            android:text=" Choose Path"
             android:textColor="@android:color/black"
             android:textSize="14sp" />
     </RelativeLayout>
